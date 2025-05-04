@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "30085220136",
+    "project_id": "ltmb786",
+    "storage_bucket": "ltmb786.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:30085220136:android:daca2f1581699da297321d",
+        "android_client_info": {
+          "package_name": "com.example.baicuoiki"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbqj_Y5cWHklsk0rUa4INU1qfWtDqICLk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
