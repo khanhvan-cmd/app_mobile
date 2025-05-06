@@ -9,7 +9,7 @@ class AuthService {
   final String baseUrl = 'http://10.0.2.2:5000/api/users'; // URL cơ sở cho API users
 
   // Map Firebase User to your User model
-  User? _userFromFirebaseUser(firebase_auth.User? firebaseUser) {
+  User? _userFromFirebaseUser(firebase_auth.User? firebaseUser, {String? role}) {
     if (firebaseUser == null) {
       print('Firebase user is null in _userFromFirebaseUser');
       return null;
@@ -20,6 +20,7 @@ class AuthService {
       email: firebaseUser.email ?? '',
       username: firebaseUser.displayName ?? 'Unknown',
       avatar: firebaseUser.photoURL, // Lấy avatar từ Firebase
+      role: role ?? 'User', // Sử dụng role được truyền vào, nếu không có thì mặc định là 'User'
       createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
       lastActive: DateTime.now(),
     );
@@ -84,7 +85,7 @@ class AuthService {
       }
 
       await _updateLastActive(user.id); // Cập nhật lastActive
-      print('Login successful: userId=${user.id}, email=${user.email}, username=${user.username}');
+      print('Login successful: userId=${user.id}, email=${user.email}, username=${user.username}, role=${user.role}');
       return user;
     } on firebase_auth.FirebaseAuthException catch (e) {
       print('FirebaseAuthException during login: ${e.code} - ${e.message}');
@@ -95,10 +96,10 @@ class AuthService {
     }
   }
 
-  // Register with email, password, and username
-  Future<User?> register(String email, String password, String username) async {
+  // Register with email, password, username, and role
+  Future<User?> register(String email, String password, String username, String role) async {
     try {
-      print('Attempting registration with email: $email, username: $username');
+      print('Attempting registration with email: $email, username: $username, role: $role');
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -118,14 +119,14 @@ class AuthService {
         print('Error updating display name: $e');
       }
 
-      final user = _userFromFirebaseUser(result.user);
+      final user = _userFromFirebaseUser(result.user, role: role);
       if (user == null) {
         print('Failed to map Firebase user to User model');
         throw Exception('Failed to map Firebase user to User model');
       }
 
       await _saveUserToMongoDB(user); // Lưu vào MongoDB
-      print('Registration successful: userId=${user.id}, email=${user.email}, username=${user.username}');
+      print('Registration successful: userId=${user.id}, email=${user.email}, username=${user.username}, role=${user.role}');
       return user;
     } on firebase_auth.FirebaseAuthException catch (e) {
       print('FirebaseAuthException during registration: ${e.code} - ${e.message}');
@@ -163,7 +164,7 @@ class AuthService {
       }
 
       print('Google Sign-In result: user=${firebaseUser.uid}');
-      final user = _userFromFirebaseUser(firebaseUser);
+      final user = _userFromFirebaseUser(firebaseUser, role: 'Admin'); // Gán vai trò Admin cho Google Sign-In
       if (user == null) {
         print('Failed to map Firebase user to User model');
         throw Exception('Failed to map Firebase user to User model');
@@ -171,7 +172,7 @@ class AuthService {
 
       await _saveUserToMongoDB(user); // Lưu vào MongoDB
       await _updateLastActive(user.id); // Cập nhật lastActive
-      print('Google Sign-In successful: userId=${user.id}, email=${user.email}, username=${user.username}');
+      print('Google Sign-In successful: userId=${user.id}, email=${user.email}, username=${user.username}, role=${user.role}');
       return user;
     } on firebase_auth.FirebaseAuthException catch (e) {
       print('FirebaseAuthException during Google Sign-In: ${e.code} - ${e.message}');

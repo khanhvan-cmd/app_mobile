@@ -13,7 +13,7 @@ class CalendarView extends StatefulWidget {
 }
 
 class _CalendarViewState extends State<CalendarView> {
-  DateTime _focusedDay = DateTime.now();
+  DateTime _focusedDay = DateTime(2025, 5, 4); // Đặt thành ngày hiện tại (4/5/2025)
   DateTime? _selectedDay;
 
   Map<DateTime, List<Task>> _getEvents() {
@@ -37,6 +37,15 @@ class _CalendarViewState extends State<CalendarView> {
   @override
   Widget build(BuildContext context) {
     final events = _getEvents();
+
+    // Nếu không có ngày nào được chọn, mặc định hiển thị công việc cho ngày hiện tại
+    final displayDay = _selectedDay ?? _focusedDay;
+    final displayDayKey = DateTime(displayDay.year, displayDay.month, displayDay.day);
+
+    // Debug để kiểm tra dữ liệu
+    print('Display day: $displayDay');
+    print('Events for $displayDay: ${events[displayDayKey]?.length ?? 0} tasks');
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -56,18 +65,19 @@ class _CalendarViewState extends State<CalendarView> {
               });
             },
             eventLoader: (day) {
-              return events[DateTime(day.year, day.month, day.day)] ?? [];
+              final dayKey = DateTime(day.year, day.month, day.day);
+              return events[dayKey] ?? [];
             },
             calendarStyle: CalendarStyle(
-              todayDecoration: BoxDecoration(
-                color: const Color(0xFFFC5C7D),
+              todayDecoration: const BoxDecoration(
+                color: Color(0xFFFC5C7D),
                 shape: BoxShape.circle,
               ),
-              selectedDecoration: BoxDecoration(
-                color: const Color(0xFF6A82FB),
+              selectedDecoration: const BoxDecoration(
+                color: Color(0xFF6A82FB),
                 shape: BoxShape.circle,
               ),
-              markerDecoration: BoxDecoration(
+              markerDecoration: const BoxDecoration(
                 color: Colors.redAccent,
                 shape: BoxShape.circle,
               ),
@@ -95,13 +105,13 @@ class _CalendarViewState extends State<CalendarView> {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16.0),
-              children: events[_selectedDay ?? _focusedDay]?.map((task) {
+              children: events[displayDayKey]?.map((task) {
                 final isReminder = task.reminderTime != null &&
-                    isSameDay(task.reminderTime!, _selectedDay ?? _focusedDay);
+                    isSameDay(task.reminderTime!, displayDay);
                 return ListTile(
                   leading: isReminder
-                      ? Icon(Icons.alarm, color: Colors.redAccent)
-                      : Icon(Icons.task, color: Colors.blue),
+                      ? const Icon(Icons.alarm, color: Colors.redAccent)
+                      : const Icon(Icons.task, color: Colors.blue),
                   title: Text(
                     task.title,
                     style: GoogleFonts.roboto(

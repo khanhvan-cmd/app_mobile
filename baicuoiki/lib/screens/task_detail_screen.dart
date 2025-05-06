@@ -6,7 +6,7 @@ import 'package:baicuoiki/services/task_service.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
-import 'package:html_unescape/html_unescape.dart'; // Correct import
+import 'package:html_unescape/html_unescape.dart';
 import 'package:baicuoiki/screens/task_screen.dart';
 
 class TaskDetailScreen extends StatefulWidget {
@@ -30,7 +30,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   void initState() {
     super.initState();
     _task = widget.task;
-    _status = _task.status.isNotEmpty ? _task.status : 'To do';
+    _status = _task.status; // Sử dụng giá trị trực tiếp từ task, không mặc định "To do"
     _loadNotifications();
   }
 
@@ -73,7 +73,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   void _editTask() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AddTaskDialog(userId: _task.createdBy, task: _task),
+      builder: (context) => AddTaskDialog(userId: _task.createdBy, role: 'User', task: _task),
     );
 
     if (result != null) {
@@ -89,14 +89,34 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Task updated successfully')),
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text('Cập nhật công việc thành công'),
+                ],
+              ),
+              backgroundColor: Color(0xFF2ECC71),
+              behavior: SnackBarBehavior.floating,
+            ),
           );
           _loadNotifications();
         }
       } catch (e) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating task: $e')),
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('Lỗi khi cập nhật công việc: $e'),
+              ],
+            ),
+            backgroundColor: Color(0xFFE74C3C),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -125,7 +145,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       case 'Done':
         return Color(0xFF2ECC71);
       case 'In progress':
-        return Color(0xFF3498DB);
+        return Color(0xFF9B59B6);
       case 'Canceled':
         return Color(0xFFE74C3C);
       case 'To do':
@@ -294,7 +314,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  value: _status.isEmpty ? 'To do' : _status,
+                                  value: _status.isEmpty ? 'Not Set' : _status, // Nếu rỗng, hiển thị "Not Set"
                                   isExpanded: true,
                                   dropdownColor: Colors.white,
                                   style: TextStyle(
@@ -303,7 +323,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                   icon: Icon(Icons.arrow_drop_down, color: Colors.white),
-                                  items: ['To do', 'In progress', 'Done', 'Canceled']
+                                  items: ['To do', 'In progress', 'Done', 'Canceled', 'Not Set']
                                       .map((status) => DropdownMenuItem(
                                     value: status,
                                     child: Text(
@@ -315,7 +335,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                   onChanged: (value) async {
                                     if (value != null) {
                                       final updatedTask = _task.copyWith(
-                                        status: value,
+                                        status: value == 'Not Set' ? '' : value, // Nếu chọn "Not Set", đặt status rỗng
                                         completed: value == 'Done',
                                       );
                                       setState(() => _isLoading = true);
@@ -323,7 +343,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                         await _taskService.updateTask(updatedTask);
                                         setState(() {
                                           _task = updatedTask;
-                                          _status = value;
+                                          _status = value == 'Not Set' ? '' : value;
                                           _isLoading = false;
                                         });
                                         ScaffoldMessenger.of(context).showSnackBar(

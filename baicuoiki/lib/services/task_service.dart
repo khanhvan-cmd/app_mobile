@@ -37,7 +37,34 @@ class TaskService {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => Task.fromJson(json)).toList();
     } else {
-      throw Exception('Failed to load tasks: ${response.body}');
+      throw Exception('Failed to load tasks: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  Future<List<Task>> getAllTasks() async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse(baseUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+      print('GET /tasks - Response status: ${response.statusCode}');
+      print('GET /tasks - Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Task.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load all tasks: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching all tasks: $e');
     }
   }
 
